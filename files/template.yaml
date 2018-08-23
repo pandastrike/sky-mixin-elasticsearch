@@ -1,0 +1,48 @@
+ESCluster:
+  Type: AWS::Elasticsearch::Domain
+  Properties:
+    AccessPolicies:
+      Version: "2012-10-17"
+      Statement:
+          - Effect: Allow
+            Principal:
+              AWS: "*"
+            Action: "es:*"
+            Resource: "arn:aws:es:us-east-1:{{accountID}}:domain/{{domain}}/*"
+    DomainName: {{domain}}
+    ElasticsearchVersion: "6.3"
+    EBSOptions:
+      EBSEnabled: true
+      VolumeType: gp2
+      {{#if diskSize}}
+      VolumeSize: {{diskSize}}
+      {{/if}}
+    {{#if cluster}}
+    ElasticsearchClusterConfig:
+      {{#with master}}
+      DedicatedMasterCount: {{count}}
+      DedicatedMasterEnabled: true
+      DedicatedMasterType: {{type}}
+      {{/with}}
+      {{#with nodes}}
+      InstanceCount: {{count}}
+      InstanceType: {{type}}
+      ZoneAwarenessEnabled: {{highAvailability}}
+      {{/with}}
+    {{/if}}
+    {{#if snapshot}}
+    SnapshotOptions:
+      AutomatedSnapshotStartHour: 0
+    {{/if}}
+    Tags:
+      {{#each tags}}
+      - Key: {{Key}}
+        Value: {{Value}}
+      {{/each}}
+    VPCOptions:
+      SecurityGroupIds:
+        "Fn::Split": [ ",", {Ref: SecurityGroups} ]
+      SubnetIds:
+        {{#each subnets}}
+        - {{.}}
+        {{/each}}
