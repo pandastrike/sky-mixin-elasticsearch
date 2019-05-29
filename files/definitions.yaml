@@ -5,11 +5,18 @@ cluster:
   additionalProperties: false
   required: [diskSize]
   properties:
+    domain:
+      description: >
+        The name of this Elasticsearch cluster.  This value defaults to the full name of the Sky deployment, `[project name]-[environment]`.  This value is available within the Sky lambda environment as `fullName`.
+      type: string
+      minLength: 1
+
     master:
       description: >
         Optional configuration for dedicated master nodes in the ES cluster.  Adding one or more of these provides your cluster better performance and stability.
       type: object
       additionalProperties: false
+      required: [count, type]
       properties:
         count:
           description: The number of master nodes within your cluster.
@@ -23,6 +30,7 @@ cluster:
         Optional configuration for the data nodes in the ES cluster.
       type: object
       additionalProperties: false
+      required: [count, type]
       properties:
         count:
           description: The number of master nodes within your cluster.
@@ -32,7 +40,7 @@ cluster:
           description: The name of the EC2 instance class to use.
           type: string
         highAvailability:
-          description: This asks the cluster to have zone awareness, distributing its fragments and instances across two availability zones in your VPC.
+          description: This asks the cluster to have zone awareness, distributing its fragments and instances across two availability zones in your VPC. Defaults to false.
           type: boolean
 
     diskSize:
@@ -42,5 +50,7 @@ cluster:
 
     snapshot:
       description: >
-        Optional flag to asking the cluster to produce a snapshot each day at 0 hours UTC.
-      type: boolean
+        Optional flag to asking the cluster to produce a snapshot each day at X hours UTC. AWS defaults to 0:00 UTC for daily snapshots.
+      type: integer
+      minimum: 0
+      maximum: 23

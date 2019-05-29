@@ -1,6 +1,6 @@
 import {resolve} from "path"
 import MIXIN from "panda-sky-mixin"
-import {read} from "fairmont"
+import {read} from "panda-quill"
 import {yaml} from "panda-serialize"
 
 import getPolicyStatements from "./policy"
