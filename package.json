@@ -1,6 +1,6 @@
 {
   "name": "sky-mixin-elasticsearch",
-  "version": "0.0.2",
+  "version": "1.0.0",
   "description": "Panda Sky Mixin for Allocating an Elasticsearch Cluster Within a VPC",
   "main": "build/npm/src/index.js",
   "files": [
@@ -42,9 +42,10 @@
     "panda-builder": "^3.2.1"
   },
   "dependencies": {
+    "ajv": "^6.10.2",
     "panda-parchment": "^4.2.0",
     "panda-quill": "^3.4.5",
     "panda-serialize": "^0.4.0",
-    "panda-sky-mixin": "0.0.4"
+    "panda-template": "^1.1.0"
   }
 }

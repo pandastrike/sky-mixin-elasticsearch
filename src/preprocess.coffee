@@ -2,26 +2,23 @@
 # This mixin allocates the requested Elasticsearch cluster into your CloudFormation stack.
 import {cat, isObject, merge} from "panda-parchment"
 
-process = (SDK, config) ->
+preprocess = (SDK, global, meta, local) ->
 
   # Start by extracting out the Elasticsearch Mixin configuration:
-  {env, tags=[]} = config
-  c = config.aws.environments[env].mixins.elasticsearch
-  c = if isObject c then c else {}
-  tags = cat (c.tags || []), tags
-  {cluster} = c
+  {vpc} = meta
+  {cluster, tags={}} = local
 
   # This mixin only works with a VPC
-  unless config.aws.vpc
+  unless vpc
     throw new Error "The Elasticsearch mixin can only be used in environments featuring a VPC."
 
   unless cluster?
     throw new Error "Please specify a cluster configuration for the Panda Sky Elasticsearch mixin. A default configuration is available if you specify cluster as an empty object, {}"
 
-  cluster.domain ?= config.environmentVariables.fullName
+  cluster.domain ?= global.environment.stack.name
 
   # By default, only use one Subnet from the template's parameter list.
-  cluster.subnets = ['"Fn::Select": [ 0, "Fn::Split": [ ",", {Ref: Subnets} ]]']
+  cluster.subnets = ['!Select [ 0, !Split [ ",", !Ref Subnets ] ]']
 
   # Apply default node configuration, if undefined.
   cluster.nodes ?=
@@ -31,7 +28,7 @@ process = (SDK, config) ->
   # High availability configuration requires the use of the other subnet.
   cluster.nodes.highAvailability ?= false
   if cluster.nodes.highAvailability
-    cluster.subnets.push '"Fn::Select": [1, "Fn::Split": [ ",", {Ref: Subnets} ]]'
+    cluster.subnets.push '!Select [ 1, !Split [ ",", !Ref Subnets ] ]'
 
   # Convert the optional UTC hour for the snapshot into an object that avoids
   # "0 as falsey" parsing from handlebars.
@@ -41,7 +38,7 @@ process = (SDK, config) ->
 
   {
     cluster, tags
-    accountID: config.accountID
+    accountID: global.accountID
   }
 
-export default process
+export default preprocess

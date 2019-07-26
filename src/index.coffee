@@ -1,28 +1,11 @@
-import {resolve} from "path"
-import MIXIN from "panda-sky-mixin"
-import {read} from "panda-quill"
-import {yaml} from "panda-serialize"
+import getTemplate from "./template"
 
-import getPolicyStatements from "./policy"
-#import getEnvironmentVariables from "./environment-variables"
-import preprocess from "./preprocessor"
-#import cli from "./cli"
+create = (SDK, global, meta, local) ->
+  name = "elasticsearch"
+  policy = []
+  vpc = true
+  template = await getTemplate SDK, global, meta, local
 
-getFilePath = (name) -> resolve __dirname, "..", "..", "..", "files", name
+  {name, policy, vpc, template}
 
-mixin = do ->
-  schema = yaml await read getFilePath "schema.yaml"
-  schema.definitions = yaml await read getFilePath "definitions.yaml"
-  template = await read getFilePath "template.yaml"
-
-  new MIXIN {
-    name: "elasticsearch"
-    schema
-    template
-    preprocess
-    #cli
-    getPolicyStatements
-    #getEnvironmentVariables
-  }
-
-export default mixin
+export default create

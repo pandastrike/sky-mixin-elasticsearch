@@ -1,46 +1,67 @@
-ESCluster:
-  Type: AWS::Elasticsearch::Domain
-  Properties:
-    AccessPolicies:
-      Version: "2012-10-17"
-      Statement:
-          - Effect: Allow
-            Principal:
-              AWS: "*"
-            Action: "es:*"
-            Resource: "arn:aws:es:us-east-1:{{accountID}}:domain/{{cluster.domain}}/*"
-    DomainName: {{cluster.domain}}
-    ElasticsearchVersion: "6.5"
-    EBSOptions:
-      EBSEnabled: true
-      VolumeType: gp2
-      VolumeSize: {{cluster.diskSize}}
-    {{#with cluster}}
-    ElasticsearchClusterConfig:
-      {{#with master}}
-      DedicatedMasterCount: {{count}}
-      DedicatedMasterEnabled: true
-      DedicatedMasterType: {{type}}
+AWSTemplateFormatVersion: "2010-09-09"
+Description: Panda Sky Mixin - Elasticsearch
+
+Parameters:
+  VPC:
+    Type: String
+  Subnets:
+    Type: String
+  AvailabilityZones:
+    Type: String
+  SecurityGroups:
+    Type: String
+  RouteTables:
+    Type: String
+
+Resources:
+  ESCluster:
+    Type: AWS::Elasticsearch::Domain
+    Properties:
+      AccessPolicies:
+        Version: "2012-10-17"
+        Statement:
+            - Effect: Allow
+              Principal:
+                AWS: "*"
+              Action: "es:*"
+              Resource: "arn:aws:es:us-east-1:{{accountID}}:domain/{{cluster.domain}}/*"
+      DomainName: {{cluster.domain}}
+      ElasticsearchVersion: "6.5"
+      EBSOptions:
+        EBSEnabled: true
+        VolumeType: gp2
+        VolumeSize: {{cluster.diskSize}}
+      {{#with cluster}}
+      ElasticsearchClusterConfig:
+        {{#with master}}
+        DedicatedMasterCount: {{count}}
+        DedicatedMasterEnabled: true
+        DedicatedMasterType: {{type}}
+        {{/with}}
+        {{#with nodes}}
+        InstanceCount: {{count}}
+        InstanceType: {{type}}
+        ZoneAwarenessEnabled: {{highAvailability}}
+        {{/with}}
       {{/with}}
-      {{#with nodes}}
-      InstanceCount: {{count}}
-      InstanceType: {{type}}
-      ZoneAwarenessEnabled: {{highAvailability}}
+      {{#with cluster.snapshot}}
+      SnapshotOptions:
+        AutomatedSnapshotStartHour: {{hour}}
       {{/with}}
-    {{/with}}
-    {{#with cluster.snapshot}}
-    SnapshotOptions:
-      AutomatedSnapshotStartHour: {{hour}}
-    {{/with}}
-    Tags:
-      {{#each tags}}
-      - Key: {{Key}}
-        Value: {{Value}}
-      {{/each}}
-    VPCOptions:
-      SecurityGroupIds:
-        "Fn::Split": [ ",", {Ref: SecurityGroups} ]
-      SubnetIds:
-        {{#each cluster.subnets}}
-        - {{.}}
+      {{#unless (isEmpty tags)}}
+      Tags:
+        {{#each tags}}
+        - Key: {{@key}}
+          Value: {{@value}}
         {{/each}}
+      {{/unless}}
+      VPCOptions:
+        SecurityGroupIds: !Split [ ",", !Ref SecurityGroups ]
+        SubnetIds:
+          {{#each cluster.subnets}}
+          - {{.}}
+          {{/each}}
+
+Outputs:
+  DomainEndpoint:
+    Value: !GetAtt [ ESCluster, DomainEndpoint ]
